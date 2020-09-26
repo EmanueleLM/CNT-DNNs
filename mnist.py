@@ -94,9 +94,13 @@ for seed_value in range(seed_range, seed_range+sims):
     initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
     initializers['random-uniform'] = keras.initializers.RandomUniform(minval=-scaling_factor, maxval=scaling_factor, seed=seed_value)
     initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
-    initializers['variance-scaling'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
-    initializers['orthogonal'] =  keras.initializers.Orthogonal(gain=scaling_factor, seed=seed_value)
-    
+    initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
+    initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
+    initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
+
     # set initializer
     optimizers = {}
     optimizers['SGD'] = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
@@ -133,12 +137,11 @@ for seed_value in range(seed_range, seed_range+sims):
         
         # Save the weights at the first and last iteration
         dst = './weights/{}/'.format(dataset)
-        save_to_file = True
         dataset_size = len(x_train)
 
         # train        
         print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
-        model.fit(x_train[:dataset_size], y_train[:dataset_size],
+        model.fit(x_train, y_train,
                   batch_size=batch_size,
                   epochs=epochs,
                   verbose=1,
