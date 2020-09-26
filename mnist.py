@@ -111,7 +111,7 @@ for seed_value in range(seed_range, seed_range+sims):
         model = Sequential()
         if architecture == 'cnn':
             for _ in range(n_layers):
-                model.add(Conv2D(256, kernel_size=(3, 3),activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(Conv2D(256, kernel_size=(3, 3), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
             model.add(Flatten())
         elif architecture == 'fc':
             model.add(Flatten())
@@ -134,7 +134,7 @@ for seed_value in range(seed_range, seed_range+sims):
         # Save the weights at the first and last iteration
         dst = './weights/{}/'.format(dataset)
         save_to_file = True
-        dataset_size = max(1, int(len(x_train)*cut_train))
+        dataset_size = len(x_train)
 
         # train        
         print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
@@ -147,9 +147,7 @@ for seed_value in range(seed_range, seed_range+sims):
         # test and save
         print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}.".format(dst))                  
         accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
-        
-        ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)
-        
+        ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)        
         for r in ranges_accuracy:
             if r <= accuracy <= r + bins_size:
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
