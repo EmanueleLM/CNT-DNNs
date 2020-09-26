@@ -6,6 +6,7 @@ Created on Thu Feb 20 22:01:11 2020
 """
 
 from __future__ import print_function
+import glob
 import os
 import keras
 import random
@@ -21,7 +22,7 @@ parser = ArgumentParser()
 parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
-                    help="Ratio of the dataset randomly used at each stage (must be different from 0.).")
+                    help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
 parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
@@ -70,7 +71,6 @@ print(x_test.shape[0], 'test samples')
 # convert class vectors to binary class matrices
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
-
 
 # Set unique seed value
 for seed_value in range(seed_range, seed_range+sims):
@@ -134,7 +134,7 @@ for seed_value in range(seed_range, seed_range+sims):
         # Save the weights at the first and last iteration
         dst = './weights/{}/'.format(dataset)
         save_to_file = True
-        dataset_size = min(1, int(np.random.rand()len(x_train)/cut_train))
+        dataset_size = max(1, int(len(x_train)*cut_train))
 
         # train        
         print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
@@ -153,6 +153,8 @@ for seed_value in range(seed_range, seed_range+sims):
         for r in ranges_accuracy:
             if r <= accuracy <= r + bins_size:
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
-                if len(next(os.walk(dst))[2]) <= 250:
+                wildcard = "{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, architecture, n_layers+2, key, scaling_factor, acc_prefix)
+                if len(glob.glob(dst+wildcard)) <= 250:
                     net_name = "{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
                     np.save(dst + net_name, np.asarray(model.get_weights()))
+                break

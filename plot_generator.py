@@ -8,63 +8,64 @@ Use this code to scan the results/fc (or cnn) folder to extract metrics from all
  raw weights, i.e., not averaged, and plot histograms of
 - link weights
 - node strength (input-output)
+- nodes disparity/fluctuation
 
-TODO: - merge with plot_generator.py
 """
-
+from argparse import ArgumentParser
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
-
 from colour import Color
 
-results_folders = ["0.1-0.125",
-                    "0.125-0.15",
-                    "0.15-0.175",
-                    "0.175-0.2",
-                    "0.2-0.225",
-                    "0.225-0.25",
-                    "0.25-0.275",
-                    "0.275-0.3",
-                    "0.3-0.325",
-                    "0.325-0.35",
-                    "0.35-0.375",
-                    "0.375-0.4",
-                    "0.4-0.425",
-                    "0.425-0.45",
-                    "0.45-0.475",
-                    "0.475-0.5",
-                    "0.5-0.525",
-                    "0.525-0.55",
-                    "0.55-0.575",
-                    "0.575-0.6",
-                    "0.6-0.625",
-                    "0.625-0.65",
-                    "0.65-0.675",
-                    "0.675-0.7",
-                    "0.7-0.725",
-                    "0.725-0.75",
-                    "0.75-0.775",
-                    "0.775-0.8",
-                    "0.8-0.825",
-                    "0.825-0.85",
-                    "0.85-0.875",
-                    "0.875-0.9",
-                    "0.9-0.925",
-                    "0.925-0.95"
-                    ]  # 0.95-0.975 and 0.975-1.0 have been removed, add it again
+# custom seed's range (multiple experiments)
+parser = ArgumentParser()
+parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
+                    help="Architecture (fc or cnn so far).")
+parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
+                    help="Dataset prefix used to save weights (MNIST, CIFAR10, IMDB).")
+parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
+                    help="Accuracy range per-bin.") 
+parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
+                    help="Initialization method(s) considered.")
+parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
+                    help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 
-topology = 'fc'  
-step = 0.025
-bins = 100
-num_colors = len(results_folders)
+args = parser.parse_args()
+architecture = args.architecture
+dataset = args.dataset
+bins_size = args.bins_size
+scaling_factor = args.scale
+init = args.init_method
+
+ranges_accuracy = np.arange(0., 1.0, bins_size)
+topology = 'fc'
+init = ('*' if len(init)==0 else init)
+files_pattern = "./weights/{}/{}_{}_*init-{}_support-{}*".format(dataset, dataset, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
+saved_images_path = "./images/{}/".format(architecture)
+
+# Set colors for plotting (green to red, low to high accuracy)
+num_nets = len(glob.glob(files_pattern))
+num_colors = len(ranges_accuracy)
 red = Color("green")
-colors = list(red.range_to(Color("red"),num_colors))
-files_pattern = "./results/@topology@/@accuracy@/*uniform-1.0*.npy"  # wildcards for topology and accuracy
-files_pattern = files_pattern.replace('@topology@', topology)
-saved_images_path = "./images/{}/".format(topology)
+colors = list(red.range_to(Color("red"), num_colors))
 
+# Link weights
+layers_link_weights = {}
+link_weights = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
+print("\n[logger]: Generating weights histogram PDFs and error-bars")
+for i, acc in enumerate(ranges_accuracy):
+    acc_prefix = "{:4.4f}".format(acc)
+    files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
+    n_files = len(glob.glob(files_))
+    print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
+    for file_ in glob.glob(files_):
+        W = np.load(file_, allow_pickle=True)  # load parameters
+        num_layers = int(len(W)/2)
+        for l in range(0, num_layers, 2):
+            link_weights[acc_prefix] = np.concatenate((link_weights[acc_prefix], W[l].flatten(), W[l+1].flatten()))
+            
+    
 # HISTOGRAMS
 # Link weights histogram
 print("\n[logger]: Link weights histogram")
