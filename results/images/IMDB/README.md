@@ -1,0 +1,1 @@
+Prevent folder to be empy.
