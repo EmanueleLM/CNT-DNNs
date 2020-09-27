@@ -79,9 +79,11 @@ for l in range(num_layers):
             x = np.arange(min_, max_, .001)
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
-plt.show()
-plt.close()
-    
+    plt.show()
+    plt.close()
+ 
+ZZZZZZ
+   
 # HISTOGRAMS
 # Link weights histogram
 print("\n[logger]: Link weights histogram")

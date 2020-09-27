@@ -128,8 +128,8 @@ for seed_value in range(seed_range, seed_range+sims):
         else:
             raise NotImplementedError("{} has not been implemented.".format(architecture))
         # Add the final layers: same for every architecture so we can analyse them together ;)
-        model.add(Dense(32, activation='relu', kernel_initializer=initializers[key], bias_initializer='zeros'))
-        model.add(Dense(num_classes, activation='softmax'))
+        model.add(Dense(32, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+        model.add(Dense(num_classes, activation='softmax', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
                
         model.compile(loss=keras.losses.categorical_crossentropy,
                       optimizer=opt,
