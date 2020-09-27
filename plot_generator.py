@@ -4,19 +4,22 @@ Created on Tue Mar 17 22:52:24 2020
 
 @author: Emanuele
 
-Use this code to scan the results/fc (or cnn) folder to extract metrics from all the
+Use this code to scan the results/fc (or other architectures) folder to extract metrics from all the
  raw weights, i.e., not averaged, and plot histograms of
 - link weights
 - node strength (input-output)
 - nodes disparity/fluctuation
 
 """
-from argparse import ArgumentParser
+import copy as cp
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
+from argparse import ArgumentParser
 from scipy import stats
 from colour import Color
+
+from Layers import FCLayer
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
@@ -24,16 +27,19 @@ parser.add_argument("-a", "--architecture", dest="architecture", default='fc', t
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10, IMDB).")
+parser.add_argument("-l", "--layers", dest="num_layers", default=5, type=int,
+                    help="Number of layers of the models considered.")
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
                     help="Accuracy range per-bin.") 
 parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
-                    help="Initialization method(s) considered.")
+                    help="Initialization method(s) considered (if left empty, all are considered).")
 parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 
 args = parser.parse_args()
 architecture = args.architecture
 dataset = args.dataset
+num_layers = args.num_layers
 bins_size = args.bins_size
 scaling_factor = args.scale
 init = args.init_method
@@ -52,7 +58,8 @@ colors = list(red.range_to(Color("red"), num_colors))
 
 # Link weights
 layers_link_weights = {}
-link_weights = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
+link_weights_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
+link_weights = [cp.copy(link_weights_single_layer) for _ in range(num_layers)]  #♣ one dictionary per layer
 print("\n[logger]: Generating weights histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
@@ -61,10 +68,19 @@ for i, acc in enumerate(ranges_accuracy):
     print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
     for file_ in glob.glob(files_):
         W = np.load(file_, allow_pickle=True)  # load parameters
-        num_layers = int(len(W)/2)
-        for l in range(0, num_layers, 2):
-            link_weights[acc_prefix] = np.concatenate((link_weights[acc_prefix], W[l].flatten(), W[l+1].flatten()))
-            
+        nn_layer = FCLayer(num_layers, W, flatten=True)  # simplify the weights/biases usage
+        for l in range(num_layers):
+            link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], nn_layer.weights[l], nn_layer.biases[l]))
+for l in range(num_layers):
+    for i, acc in enumerate(ranges_accuracy):
+        acc_prefix = "{:4.4f}".format(acc)
+        if len(link_weights[l][acc_prefix]) != 0:
+            min_, max_ = np.min(link_weights[l][acc_prefix]), np.max(link_weights[l][acc_prefix])
+            x = np.arange(min_, max_, .001)
+            density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
+            plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
+plt.show()
+plt.close()
     
 # HISTOGRAMS
 # Link weights histogram
