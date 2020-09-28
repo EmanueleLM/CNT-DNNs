@@ -48,7 +48,7 @@ ranges_accuracy = np.arange(0., 1.0, bins_size)
 topology = 'fc'
 init = ('*' if len(init)==0 else init)
 files_pattern = "./weights/{}/{}_{}_*init-{}_support-{}*".format(dataset, dataset, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
-saved_images_path = "./images/{}/".format(architecture)
+saved_images_path = "./results/images/{}/".format(dataset)
 
 # Set colors for plotting (green to red, low to high accuracy)
 num_nets = len(glob.glob(files_pattern))
@@ -79,10 +79,13 @@ for l in range(num_layers):
             x = np.arange(min_, max_, .001)
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
+    plt.title("{} Link Weights LAYER {}".format(dataset, l))
+    plt.xlabel("W")
+    plt.ylabel("PDF(W)")
     plt.show()
+    fig_name = "{}_{}_link-weights_init-{}_support-{}_layer-{}.svg".format(dataset, architecture, (init if init!='*' else 'any'), scaling_factor, l)
+    plt.savefig(fig_name)
     plt.close()
- 
-ZZZZZZ
    
 # HISTOGRAMS
 # Link weights histogram
