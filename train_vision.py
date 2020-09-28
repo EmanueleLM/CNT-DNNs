@@ -116,7 +116,7 @@ for seed_value in range(seed_range, seed_range+sims):
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
-    epochs = random.randint(1, 2)
+    epochs = random.randint(1, 10)
     n_layers = 3
     
     for key in initializers.keys():

@@ -6,7 +6,7 @@
 # $5: scale (0.05, 0.5, 5.0)
 # $6: sims (1000 usually)
 # $7, $8: min-max values of accuracy considered (all the other are discarded)
-# Example sh ./run_exp.sh MNIST fc 1.0 0.025 0.05 1000 0.5 0.9
+# Example sh ./run_exp.sh MNIST fc 1.0 0.025 5.00 1000 0.0 1.0
 dataset=$1
 architecture=$2
 cut_train=$3
