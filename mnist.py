@@ -145,7 +145,7 @@ for seed_value in range(seed_range, seed_range+sims):
         
         # Save the weights at the first and last iteration
         dst = './weights/{}/'.format(dataset)
-        dataset_size = len(x_train)
+        dataset_size = int(cut_train*len(x_train))
 
         # train        
         print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
