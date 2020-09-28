@@ -11,7 +11,7 @@ import os
 import keras
 import random
 from argparse import ArgumentParser
-from keras.datasets import mnist
+from keras.datasets import mnist, cifar10
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import Conv2D
@@ -23,6 +23,8 @@ parser.add_argument("-a", "--architecture", dest="architecture", default='fc', t
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
+parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
+                    help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
@@ -39,6 +41,7 @@ parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
 args = parser.parse_args()
 architecture = args.architecture
 cut_train = args.cut_train
+dataset = args.dataset
 seed_range = args.seed_range
 bins_size = args.bins_size
 scaling_factor = args.scale
@@ -46,21 +49,26 @@ sims = args.sims
 min_range_fin, max_range_fin = args.min, args.max
 
 # import data
-dataset = "MNIST"
 batch_size = 512
 num_classes = 10
 # input image dimensions
-img_rows, img_cols = 28, 28
+img_rows, img_cols = (28, 28 if dataset=='MNIST' else 32, 32)
+num_channels = (1 if dataset=='MNIST' else 3)
 # the data, split between train and test sets
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
+if dataset == 'MNIST':
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+elif dataset == 'CIFAR10':
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+else:
+    raise Exception("Dataset {} not implemented (use MNIST or CIFAR10)".format(dataset))
 if K.image_data_format() == 'channels_first':
-    x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
-    x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
+    x_train = x_train.reshape(x_train.shape[0], num_channels, img_rows, img_cols)
+    x_test = x_test.reshape(x_test.shape[0], num_channels, img_rows, img_cols)
     input_shape = (1, img_rows, img_cols)
 else:
-    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
-    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
-    input_shape = (img_rows, img_cols, 1)
+    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, num_channels)
+    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, num_channels)
+    input_shape = (img_rows, img_cols, num_channels)
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
 x_train /= 255

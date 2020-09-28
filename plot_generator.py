@@ -26,7 +26,7 @@ parser = ArgumentParser()
 parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
-                    help="Dataset prefix used to save weights (MNIST, CIFAR10, IMDB).")
+                    help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-l", "--layers", dest="num_layers", default=5, type=int,
                     help="Number of layers of the models considered.")
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
