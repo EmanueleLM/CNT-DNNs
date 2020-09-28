@@ -23,7 +23,7 @@ parser.add_argument("-a", "--architecture", dest="architecture", default='fc', t
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
-parser.add_argument("-d", "--dataset", dest="dataset", default='CIFAR10', type=str,
+parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
@@ -116,7 +116,7 @@ for seed_value in range(seed_range, seed_range+sims):
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
-    epochs = random.randint(1, 10)
+    epochs = random.randint(1, 2)
     n_layers = 3
     
     for key in initializers.keys():

@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 from scipy import stats
 from colour import Color
 
-from Layers import FCLayer
+from ComplexNetwork import ComplexNetwork
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
@@ -45,6 +45,7 @@ scaling_factor = args.scale
 init = args.init_method
 
 ranges_accuracy = np.arange(0., 1.0, bins_size)
+input_size, output_size = (28*28 if dataset=='MNIST' else 32*32*3), 10
 topology = 'fc'
 init = ('*' if len(init)==0 else init)
 files_pattern = "./weights/{}/{}_{}_*init-{}_support-{}*".format(dataset, dataset, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
@@ -68,7 +69,7 @@ for i, acc in enumerate(ranges_accuracy):
     print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
     for file_ in glob.glob(files_):
         W = np.load(file_, allow_pickle=True)  # load parameters
-        nn_layer = FCLayer(num_layers, W, flatten=True)  # simplify the weights/biases usage
+        nn_layer = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], nn_layer.weights[l], nn_layer.biases[l]))
 for l in range(num_layers):
