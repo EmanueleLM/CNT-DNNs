@@ -9,7 +9,7 @@
 # Example sh ./run_exp.sh MNIST fc 1.0 0.025 0.05 1000 0.5 0.9
 for i in {0..9}
 do
-    let seed="i*1000"
+    #let seed="i*1000"
     echo 'python3 train_vision.py -d $1 -a $2 --cut-train $3 --seed $seed --bins $4 --scale $5 --sims $6 --min $7 --max $8'
-    screen -d -m nice bash -c 'python3 train_vision.py -d $1 -a $2 --cut-train $3 --seed $seed --bins $4 --scale $5 --sims $6 --min $7 --max $8'
+    #screen -d -m nice bash -c 'python3 train_vision.py -d $1 -a $2 --cut-train $3 --seed $seed --bins $4 --scale $5 --sims $6 --min $7 --max $8'
 done
