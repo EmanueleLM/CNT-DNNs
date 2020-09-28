@@ -149,7 +149,7 @@ for seed_value in range(seed_range, seed_range+sims):
 
         # train        
         print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
-        model.fit(x_train, y_train,
+        model.fit(x_train[:dataset_size], y_train[:dataset_size],
                   batch_size=batch_size,
                   epochs=epochs,
                   verbose=1,
