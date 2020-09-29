@@ -15,7 +15,7 @@ scale=$5
 sims=$6
 min=$7
 max=$8
-for i in {0..20}
+for i in $(seq 1 2 20)
 do
     seed=$(( 10000*i ))
     echo "Args: dataset: $1, arch: $2, cut_train:$3, binc: $4, scale: $5, sims: $6, min: $7, max: $8"
