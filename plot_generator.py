@@ -66,13 +66,14 @@ for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
-    print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
+    print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     for file_ in glob.glob(files_):
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
 for l in range(num_layers):
+    print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
         if len(link_weights[l][acc_prefix]) != 0:
@@ -96,13 +97,14 @@ for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
-    print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
+    print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     for file_ in glob.glob(files_):
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
 for l in range(num_layers):
+    print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
         if len(nodes_strength[l][acc_prefix]) != 0:
@@ -123,16 +125,18 @@ link_nodes_fluctuation_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r)
 nodes_fluctuation= [cp.copy(link_nodes_fluctuation_single_layer) for _ in range(num_layers)]  # one dictionary per layer
 print("\n[logger]: Generating fluctuations histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
+    print("[logger]: Collecting files...")
     acc_prefix = "{:4.4f}".format(acc)
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
-    print("[logger]: {} nets with accuracy{} with wildcard {}".format(n_files, acc_prefix, files_))
+    print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     for file_ in glob.glob(files_):
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
 for l in range(num_layers):
+    print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
         if len(nodes_fluctuation[l][acc_prefix]) != 0:
