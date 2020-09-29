@@ -19,7 +19,7 @@ from keras import backend as K
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
@@ -49,7 +49,7 @@ sims = args.sims
 min_range_fin, max_range_fin = args.min, args.max
 
 # import data
-batch_size = 2048
+batch_size = 512
 num_classes = 10
 # input image dimensions
 img_rows, img_cols = ((28, 28) if dataset=='MNIST' else (32, 32))

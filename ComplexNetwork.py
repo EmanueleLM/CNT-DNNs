@@ -26,7 +26,7 @@ class __Network(object):
         
 class __FCLayer(__Network):
     def __init__(self, architecture, num_layers, weights, input_size, output_size, flatten=True):
-        super().__init__(architecture, num_layers, weights, input_size, output_size, flatten=True)
+        super().__init__(architecture, num_layers, weights, input_size, output_size, flatten)
         self.architecture = 'fc'
         self.weights = []
         self.biases = []
@@ -35,18 +35,18 @@ class __FCLayer(__Network):
             self.weights.append((weights[i].flatten() if flatten else weights[i]))
             self.biases.append((weights[i+1].flatten() if flatten else weights[i+1]))
             
-        def nodes_strength(self, layer):
-            if layer == 0:
-                strength = self.weights[0].sum(axis=-1) + 1
-            elif layer == self.num_layers:
-                strength = self.weights[-1].sum(axis=0) + 1 + self.biases[-1]
-            else:
-                s_in = self.weights[layer].sum(axis=-1) 
-                s_out = self.weights[layer-1].sum(axis=0) + self.biases[layer-1]
-                strength = s_in + s_out
-            return strength
-        
-        def nodes_fluctuation(self, layer):
-            fluctuation = self.nodes_strength(layer).std()
-            return fluctuation   
-        
+    def nodes_strength(self, layer):
+        if layer == 0:
+            strength = self.weights[0].sum(axis=-1) + 1
+        elif layer == self.num_layers:
+            strength = self.weights[-1].sum(axis=0) + 1 + self.biases[-1]
+        else:
+            s_in = self.weights[layer].sum(axis=-1) 
+            s_out = self.weights[layer-1].sum(axis=0) + self.biases[layer-1]
+            strength = s_in + s_out
+        return strength
+    
+    def nodes_fluctuation(self, layer):
+        fluctuation = self.nodes_strength(layer).std()
+        return [fluctuation]  
+    
