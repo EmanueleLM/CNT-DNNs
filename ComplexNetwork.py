@@ -48,5 +48,5 @@ class __FCLayer(__Network):
     
     def nodes_fluctuation(self, layer):
         fluctuation = self.nodes_strength(layer).std()
-        return [fluctuation]  
+        return [fluctuation]  # enclose the value (a scalar) in a list  
     
