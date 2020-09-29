@@ -7,7 +7,7 @@ Created on Sun Sep 27 09:43:58 2020
 
 def ComplexNetwork(architecture, num_layers, weights, input_size, output_size, flatten=True):
     if architecture == 'fc':
-        return __Network('fc', num_layers, weights, input_size, output_size, flatten)
+        return __FCLayer('fc', num_layers, weights, input_size, output_size, flatten)
     elif architecture == 'cnn':
         pass
     elif architecture == 'rnn':
@@ -26,7 +26,7 @@ class __Network(object):
         
 class __FCLayer(__Network):
     def __init__(self, architecture, num_layers, weights, input_size, output_size, flatten=True):
-        super(__FCLayer, self).__init__()
+        super().__init__(architecture, num_layers, weights, input_size, output_size, flatten=True)
         self.architecture = 'fc'
         self.weights = []
         self.biases = []

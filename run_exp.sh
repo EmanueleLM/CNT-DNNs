@@ -17,7 +17,7 @@ min=$7
 max=$8
 for i in 0 1 2 3 4 5 6 7 8 9
 do
-    seed=$(( 1000*i ))
+    seed=$(( 10000*i ))
     echo "Args: dataset: $1, arch: $2, cut_train:$3, binc: $4, scale: $5, sims: $6, min: $7, max: $8"
     screen -d -m nice bash -c "python3 train_vision.py -d $dataset -a $architecture --cut-train $cut_train --seed $seed --bins $bins --scale $scale --sims $sims --min $min --max $max"
 done
