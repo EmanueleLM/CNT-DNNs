@@ -77,6 +77,7 @@ for l in range(num_layers):
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
         if len(link_weights[l][acc_prefix]) != 0:
+            # Generate PDF
             min_, max_ = np.min(link_weights[l][acc_prefix]), np.max(link_weights[l][acc_prefix])
             x = np.arange(min_, max_, .001)
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
@@ -84,9 +85,9 @@ for l in range(num_layers):
     plt.title("{} Link Weights LAYER {}".format(dataset, l))
     plt.xlabel("W")
     plt.ylabel("PDF(W)")
-    plt.show()
     fig_name = "{}_{}_link-weights_init-{}_support-{}_layer-{}{}".format(dataset, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
+    plt.show()
     plt.close()
 
 # Nodes strength
@@ -108,6 +109,7 @@ for l in range(num_layers):
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
         if len(nodes_strength[l][acc_prefix]) != 0:
+            # Generate PDF
             min_, max_ = np.min(nodes_strength[l][acc_prefix]), np.max(nodes_strength[l][acc_prefix])
             x = np.arange(min_, max_, .001)
             density = stats.kde.gaussian_kde(nodes_strength[l][acc_prefix])
@@ -115,9 +117,9 @@ for l in range(num_layers):
     plt.title("{} Nodes Strength LAYER {}".format(dataset, l))
     plt.xlabel("S")
     plt.ylabel("PDF(S)")
-    plt.show()
     fig_name = "{}_{}_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
+    plt.show()
     plt.close()
     
 # Nodes fluctuation
@@ -139,7 +141,8 @@ for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
-        if len(nodes_fluctuation[l][acc_prefix]) != 0:
+        if len(nodes_fluctuation[l][acc_prefix]) > 1:  # at least two elements are needed for density estimation
+            # Generate PDF
             min_, max_ = np.min(nodes_fluctuation[l][acc_prefix]), np.max(nodes_fluctuation[l][acc_prefix])
             x = np.arange(min_, max_, .001)
             density = stats.kde.gaussian_kde(nodes_fluctuation[l][acc_prefix])
@@ -147,7 +150,7 @@ for l in range(num_layers):
     plt.title("{} Nodes Fluctuation LAYER {}".format(dataset, l))
     plt.xlabel("Yi")
     plt.ylabel("PDF(Yi)")
-    plt.show()
     fig_name = "{}_{}_nodes-fluctuation_init-{}_support-{}_layer-{}{}".format(dataset, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
+    plt.show()
     plt.close()
