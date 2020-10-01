@@ -37,6 +37,8 @@ parser.add_argument("-min", "--min", dest="min", default=0.0, type=float,
                     help="Min accuracy values for final models (discard anything below).")
 parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
+parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
+                    help="Bind GPUs (server only)")
 
 args = parser.parse_args()
 architecture = args.architecture
@@ -47,6 +49,7 @@ bins_size = args.bins_size
 scaling_factor = args.scale
 sims = args.sims
 min_range_fin, max_range_fin = args.min, args.max
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus  # bind GPUs
 
 # import data
 batch_size = 512
