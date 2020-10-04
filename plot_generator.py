@@ -72,7 +72,8 @@ for i, acc in enumerate(ranges_accuracy):
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     global_files = glob.glob(files_)
-    shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
+    if len(global_files) > 0:
+        shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
     for file_ in global_files:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
@@ -106,7 +107,8 @@ for i, acc in enumerate(ranges_accuracy):
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     global_files = glob.glob(files_)
-    shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
+    if len(global_files) > 0:
+        shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
     for file_ in global_files:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
@@ -141,7 +143,8 @@ for i, acc in enumerate(ranges_accuracy):
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
     global_files = glob.glob(files_)
-    shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
+    if len(global_files) > 0:
+        shuffle(global_files)[:maxfiles]  # random shuffle and take some of them
     for file_ in global_files:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
