@@ -78,7 +78,7 @@ for i, acc in enumerate(ranges_accuracy):
         processed_files += 1
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
-        if np.isnan(W).any():
+        if  np.any([np.isnan(w).any() for w in W]):
             continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
@@ -119,7 +119,7 @@ for i, acc in enumerate(ranges_accuracy):
         processed_files += 1
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
-        if np.isnan(W).any():
+        if  np.any([np.isnan(w).any() for w in W]):
             continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
@@ -161,7 +161,7 @@ for i, acc in enumerate(ranges_accuracy):
         processed_files += 1
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
-        if np.isnan(W).any():
+        if  np.any([np.isnan(w).any() for w in W]):
             continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
