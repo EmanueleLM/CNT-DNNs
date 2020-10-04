@@ -71,15 +71,20 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    global_files = glob.glob(files_)
-    if len(global_files) > 0:
-        shuffle(global_files)  # random shuffle and take some of them
-        global_files = global_files[:maxfiles]
-    for file_ in global_files:
+    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    if len(global_files) > 0:  # random shuffle if non-empty
+        shuffle(global_files)
+    while processed_files != len(global_files):
+        processed_files += 1
+        if np.isnan(global_files[idx_glob]).any():
+            continue
+        file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
+        if processed_files >= maxfiles:
+            break
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -107,15 +112,20 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    global_files = glob.glob(files_)
-    if len(global_files) > 0:
-        shuffle(global_files)  # random shuffle and take some of them
-        global_files = global_files[:maxfiles]
-    for file_ in global_files:
+    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    if len(global_files) > 0:  # random shuffle if non-empty
+        shuffle(global_files)
+    while processed_files != len(global_files):
+        processed_files += 1
+        if np.isnan(global_files[idx_glob]).any():
+            continue
+        file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
+        if processed_files >= maxfiles:
+            break
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -144,15 +154,20 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    global_files = glob.glob(files_)
-    if len(global_files) > 0:
-        shuffle(global_files)  # random shuffle and take some of them
-        global_files = global_files[:maxfiles]
-    for file_ in global_files:
+    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    if len(global_files) > 0:  # random shuffle if non-empty
+        shuffle(global_files)
+    while processed_files != len(global_files):
+        processed_files += 1
+        if np.isnan(global_files[idx_glob]).any():
+            continue
+        file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
+        if processed_files >= maxfiles:
+            break
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
