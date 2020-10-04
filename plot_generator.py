@@ -76,10 +76,10 @@ for i, acc in enumerate(ranges_accuracy):
         shuffle(global_files)
     while processed_files != len(global_files):
         processed_files += 1
-        if np.isnan(global_files[idx_glob]).any():
-            continue
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
+        if np.isnan(W).any():
+            continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
@@ -117,10 +117,10 @@ for i, acc in enumerate(ranges_accuracy):
         shuffle(global_files)
     while processed_files != len(global_files):
         processed_files += 1
-        if np.isnan(global_files[idx_glob]).any():
-            continue
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
+        if np.isnan(W).any():
+            continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
@@ -159,10 +159,10 @@ for i, acc in enumerate(ranges_accuracy):
         shuffle(global_files)
     while processed_files != len(global_files):
         processed_files += 1
-        if np.isnan(global_files[idx_glob]).any():
-            continue
         file_ = global_files[idx_glob]
         W = np.load(file_, allow_pickle=True)  # load parameters
+        if np.isnan(W).any():
+            continue
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
