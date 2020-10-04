@@ -35,6 +35,8 @@ parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
                     help="Initialization method(s) considered (if left empty, all are considered).")
 parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
+parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=250, type=int,
+                    help="Maximum number of files considered for each bin.")
 
 args = parser.parse_args()
 architecture = args.architecture
@@ -43,6 +45,7 @@ num_layers = args.num_layers
 bins_size = args.bins_size
 scaling_factor = args.scale
 init = args.init_method
+maxfiles = args.maxfiles
 
 ranges_accuracy = np.arange(0., 1.0, bins_size)
 input_size, output_size = (28*28 if dataset=='MNIST' else 32*32*3), 10
@@ -67,7 +70,7 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    for file_ in glob.glob(files_):
+    for file_ in glob.glob(files_)[:maxfiles]:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
@@ -99,7 +102,7 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    for file_ in glob.glob(files_):
+    for file_ in glob.glob(files_)[:maxfiles]:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
@@ -132,7 +135,7 @@ for i, acc in enumerate(ranges_accuracy):
     files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
     n_files = len(glob.glob(files_))
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    for file_ in glob.glob(files_):
+    for file_ in glob.glob(files_)[:maxfiles]:
         W = np.load(file_, allow_pickle=True)  # load parameters
         CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
