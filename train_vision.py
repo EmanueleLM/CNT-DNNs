@@ -39,6 +39,8 @@ parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
+                    help="Number of parameters in the hidden layers")
 
 args = parser.parse_args()
 architecture = args.architecture
@@ -50,6 +52,29 @@ scaling_factor = args.scale
 sims = args.sims
 min_range_fin, max_range_fin = args.min, args.max
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus  # bind GPUs
+netsize = args.netsize
+
+# Set the size of the networks to be trained
+if architecture == 'fc':
+    if netsize == 'medium':
+        hidden_units =  264
+    elif netsize == 'big':
+        hidden_units = 2000
+    elif netsize == 'small':
+        hidden_units = 32
+    else:
+        raise Exception("{} is not a valid netsize argument (use 'small', 'medium' or 'big')".format(netsize))
+elif architecture == 'cnn':
+    if netsize == 'medium':
+        hidden_units =  64
+    elif netsize == 'big':
+        hidden_units = 10
+    elif netsize == 'small':
+        hidden_units = 256
+    else:
+        raise Exception("{} is not a valid netsize argument (use 'small', 'medium' or 'big')".format(netsize))
+else:
+    raise Exception("{} is not a valid architecture argument (use 'fc' or 'cnn')".format(architecture))
 
 # import data
 batch_size = 512
@@ -167,6 +192,6 @@ for seed_value in range(seed_range, seed_range+sims):
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
                 wildcard = "{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, architecture, n_layers+2, key, scaling_factor, acc_prefix)
                 if len(glob.glob(dst+wildcard)) <= 250:
-                    net_name = "{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
+                    net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
                     np.save(dst + net_name, np.asarray(model.get_weights()))
                 break

@@ -38,6 +38,8 @@ parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, type=int,
                     help="Maximum number of files considered for each bin.")
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
+                    help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters)")
 
 args = parser.parse_args()
 architecture = args.architecture
@@ -47,11 +49,12 @@ bins_size = args.bins_size
 scaling_factor = args.scale
 init = args.init_method
 maxfiles = args.maxfiles
+netsize = args.netsize
 
 ranges_accuracy = np.arange(0., 1.0, bins_size)
 input_size, output_size = (28*28 if dataset=='MNIST' else 32*32*3), 10
 init = ('*' if len(init)==0 else init)
-files_pattern = "./weights/{}/{}_{}_*init-{}_support-{}*".format(dataset, dataset, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
+files_pattern = "./weights/{}/{}_{}_{}_*init-{}_support-{}*".format(dataset, dataset, netsize, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
 saved_images_path = "./results/images/{}/".format(dataset)
 img_format = '.png'
 
