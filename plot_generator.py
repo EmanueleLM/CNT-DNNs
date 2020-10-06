@@ -36,7 +36,7 @@ parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
                     help="Initialization method(s) considered (if left empty, all are considered).")
 parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
-parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=250, type=int,
+parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, type=int,
                     help="Maximum number of files considered for each bin.")
 
 args = parser.parse_args()
@@ -92,7 +92,7 @@ for l in range(num_layers):
         if len(link_weights[l][acc_prefix]) != 0:
             # Generate PDF
             min_, max_ = np.min(link_weights[l][acc_prefix]), np.max(link_weights[l][acc_prefix])
-            x = np.arange(min_, max_, .001)
+            x = np.arange(min_, max_, abs(max_-min_)/1000)
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
     plt.title("{} Link Weights LAYER {}".format(dataset, l))
@@ -133,7 +133,7 @@ for l in range(num_layers):
         if len(nodes_strength[l][acc_prefix]) != 0:
             # Generate PDF
             min_, max_ = np.min(nodes_strength[l][acc_prefix]), np.max(nodes_strength[l][acc_prefix])
-            x = np.arange(min_, max_, .001)
+            x = np.arange(min_, max_, abs(max_-min_)/1000)
             density = stats.kde.gaussian_kde(nodes_strength[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
     plt.title("{} Nodes Strength LAYER {}".format(dataset, l))
@@ -175,7 +175,7 @@ for l in range(num_layers):
         if len(nodes_fluctuation[l][acc_prefix]) > 1:  # at least two elements are needed for density estimation
             # Generate PDF
             min_, max_ = np.min(nodes_fluctuation[l][acc_prefix]), np.max(nodes_fluctuation[l][acc_prefix])
-            x = np.arange(min_, max_, .001)
+            x = np.arange(min_, max_, abs(max_-min_)/1000)
             density = stats.kde.gaussian_kde(nodes_fluctuation[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
     plt.title("{} Nodes Fluctuation LAYER {}".format(dataset, l))
