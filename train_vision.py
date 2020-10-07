@@ -57,7 +57,7 @@ netsize = args.netsize
 # Set the size of the networks to be trained
 if architecture == 'fc':
     if netsize == 'medium':
-        hidden_units =  264
+        hidden_units =  256
     elif netsize == 'big':
         hidden_units = 2000
     elif netsize == 'small':
@@ -151,12 +151,12 @@ for seed_value in range(seed_range, seed_range+sims):
         model = Sequential()
         if architecture == 'cnn':
             for _ in range(n_layers):
-                model.add(Conv2D(64, kernel_size=(5, 5), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(Conv2D(hidden_units, kernel_size=(5, 5), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
             model.add(Flatten())
         elif architecture == 'fc':
             model.add(Flatten())
             for _ in range(n_layers):
-                model.add(Dense(256, activation='relu',kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(Dense(hidden_units, activation='relu',kernel_initializer=initializers[key], bias_initializer=initializers[key]))
         elif architecture == 'rnn':
             raise NotImplementedError("{} has not been implemented yet.".format(architecture))
         elif architecture == 'attention':
