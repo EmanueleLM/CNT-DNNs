@@ -190,7 +190,7 @@ for seed_value in range(seed_range, seed_range+sims):
         for r in ranges_accuracy:
             if r <= accuracy <= r + bins_size:
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
-                wildcard = "{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, architecture, n_layers+2, key, scaling_factor, acc_prefix)
+                wildcard = "{}_{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, acc_prefix)
                 if len(glob.glob(dst+wildcard)) <= 250:
                     net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
                     np.save(dst + net_name, np.asarray(model.get_weights()))
