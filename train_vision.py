@@ -39,7 +39,7 @@ parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
-parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
                     help="Number of parameters in the hidden layers")
 
 args = parser.parse_args()
@@ -184,13 +184,14 @@ for seed_value in range(seed_range, seed_range+sims):
                   validation_data=(x_test, y_test))
         
         # test and save
-        print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}.".format(dst))                  
+        print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}".format(dst))                  
         accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
         ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)        
         for r in ranges_accuracy:
             if r <= accuracy <= r + bins_size:
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
                 wildcard = "{}_{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, acc_prefix)
+                print(wildcard, glob.glob(dst+wildcard))
                 if len(glob.glob(dst+wildcard)) <= 250:
                     net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
                     np.save(dst + net_name, np.asarray(model.get_weights()))
