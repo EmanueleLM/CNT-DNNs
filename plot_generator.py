@@ -88,6 +88,7 @@ for i, acc in enumerate(ranges_accuracy):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
         if processed_files >= maxfiles:
             break
+        idx_glob += 1
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -129,6 +130,7 @@ for i, acc in enumerate(ranges_accuracy):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
         if processed_files >= maxfiles:
             break
+        idx_glob += 1
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -171,6 +173,7 @@ for i, acc in enumerate(ranges_accuracy):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
         if processed_files >= maxfiles:
             break
+        idx_glob += 1
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
