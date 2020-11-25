@@ -19,11 +19,11 @@ from keras import backend as K
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
-parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
+parser.add_argument("-d", "--dataset", dest="dataset", default='CIFAR10', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
@@ -39,7 +39,7 @@ parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
-parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
                     help="Number of parameters in the hidden layers")
 
 args = parser.parse_args()
@@ -67,9 +67,9 @@ if architecture == 'fc':
 elif architecture == 'cnn':
     if netsize == 'medium':
         hidden_units =  64
-    elif netsize == 'big':
-        hidden_units = 10
     elif netsize == 'small':
+        hidden_units = 10
+    elif netsize == 'big':
         hidden_units = 256
     else:
         raise Exception("{} is not a valid netsize argument (use 'small', 'medium' or 'big')".format(netsize))
@@ -77,7 +77,7 @@ else:
     raise Exception("{} is not a valid architecture argument (use 'fc' or 'cnn')".format(architecture))
 
 # import data
-batch_size = 512
+batch_size = 64
 num_classes = 10
 # input image dimensions
 img_rows, img_cols = ((28, 28) if dataset=='MNIST' else (32, 32))
@@ -144,14 +144,14 @@ for seed_value in range(seed_range, seed_range+sims):
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
-    epochs = random.randint(1, 10)
-    n_layers = 3
+    epochs = random.randint(1, 100)
+    n_layers = 2
     
     for key in initializers.keys():
         model = Sequential()
         if architecture == 'cnn':
             for _ in range(n_layers):
-                model.add(Conv2D(hidden_units, kernel_size=(5, 5), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(Conv2D(hidden_units, kernel_size=(3, 3), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
             model.add(Flatten())
         elif architecture == 'fc':
             model.add(Flatten())

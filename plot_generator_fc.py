@@ -38,8 +38,8 @@ parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, type=int,
                     help="Maximum number of files considered for each bin.")
-parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
-                    help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters)")
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
+                    help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters): values are 'small', 'medium' and 'large'")
 
 args = parser.parse_args()
 architecture = args.architecture
@@ -83,7 +83,7 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=True)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=True)  # simplify the weights/biases usage
         for l in range(num_layers):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
         if processed_files >= maxfiles:
@@ -125,7 +125,7 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
         if processed_files >= maxfiles:
@@ -168,7 +168,7 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, W, input_size, output_size, flatten=False)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=False)  # simplify the weights/biases usage
         for l in range(num_layers):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
         if processed_files >= maxfiles:
