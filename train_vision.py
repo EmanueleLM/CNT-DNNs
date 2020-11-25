@@ -39,7 +39,7 @@ parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
-parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
                     help="Number of parameters in the hidden layers")
 
 args = parser.parse_args()
@@ -164,7 +164,7 @@ for seed_value in range(seed_range, seed_range+sims):
         else:
             raise NotImplementedError("{} has not been implemented.".format(architecture))
         # Add the final layers: same for every architecture so we can analyse them together ;)
-        model.add(Dense(32, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+        model.add(Dense(200, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
         model.add(Dense(num_classes, activation='softmax', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
                
         model.compile(loss=keras.losses.categorical_crossentropy,
