@@ -34,13 +34,14 @@ class __FCLayer(__Network):
         self.weights = []
         self.biases = []
         # Collect weights and biases for each layer
-        for i in range(0, 2*num_layers, 2):
+        for i in range(0, len(weights), 2):
             self.weights.append((weights[i].flatten() if flatten else weights[i]))
             self.biases.append((weights[i+1].flatten() if flatten else weights[i+1]))
             
     def nodes_strength(self, layer):
         if layer == 0:
             strength = self.weights[0].sum(axis=-1) + 1
+        # Last layer
         elif layer == self.num_layers:
             strength = self.weights[-1].sum(axis=0) + 1 + self.biases[-1]
         else:
@@ -65,7 +66,7 @@ class __CNNLayer(__Network):
         self.padding = []
         self.input_shape_layer = []
         # Collect weights and biases for each layer
-        for n,i in enumerate(range(0, 2*num_layers, 2)):
+        for n,i in enumerate(range(0, len(weights), 2)):
             self.weights.append((weights[i].flatten() if flatten else weights[i]))
             self.biases.append((weights[i+1].flatten() if flatten else weights[i+1]))
             if n < self.num_conv_layers:
@@ -96,13 +97,18 @@ class __CNNLayer(__Network):
         elif layer == self.num_conv_layers:
             s_in = Convolution(self.input_shape_layer[layer-1], self.weights[layer-1], self.biases[layer-1], self.stride[layer-1], self.padding[layer-1]).output_strength
             s_out = self.weights[layer].sum(axis=-1)
+        # Last layer
+        elif layer == self.num_layers:
+            s_in = self.weights[layer-1].sum(axis=0) + self.biases[layer-1]
+            s_out = 1
+        # Any fc layer, except the last one
         else:
             s_in = self.weights[layer-1].sum(axis=0) + self.biases[layer-1]
             s_out = self.weights[layer].sum(axis=1) 
         print("[logger-DEBUG]: Strength of layer {}".format(layer))
-        print("\t Shape of weights: {}".format(self.weights[layer].shape))
-        print("\t S_in shape: {}".format(s_out.shape if layer!=0 else 1))
-        print("\t S_out shape: {}".format(s_out.shape if layer!=0 else 1))
+        print("\t Shape of weights: {}".format(self.weights[layer].shape if layer < self.num_layers else None))
+        print("\t S_in shape: {}".format((1 if isinstance(s_in, int) else s_in.shape)))
+        print("\t S_out shape: {}".format((1 if isinstance(s_out, int) else s_out.shape)))
         # Flatten before return
         s_in = (1 if isinstance(s_in, int) else s_in.flatten())
         s_out = (1 if isinstance(s_out, int) else s_out.flatten())
