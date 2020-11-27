@@ -29,7 +29,7 @@ class __Network(object):
         
 class __FCLayer(__Network):
     def __init__(self, architecture, num_layers, weights, input_shape, output_size, flatten=True):
-        super().__init__(architecture, num_layers, weights, input_shape, output_size, flatten)
+        super().__init__(architecture, num_layers, weights, input_shape, output_size, None, None, flatten)
         self.architecture = 'fc'
         self.weights = []
         self.biases = []
