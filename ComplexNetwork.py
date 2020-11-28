@@ -37,6 +37,9 @@ class __FCLayer(__Network):
         for i in range(0, len(weights), 2):
             self.weights.append((weights[i].flatten() if flatten else weights[i]))
             self.biases.append((weights[i+1].flatten() if flatten else weights[i+1]))
+    
+    def link_weights(self, layer):
+        return (self.weights[layer], self.biases[layer])
             
     def nodes_strength(self, layer):
         if layer == 0:
@@ -52,7 +55,7 @@ class __FCLayer(__Network):
     
     def nodes_fluctuation(self, layer):
         fluctuation = self.nodes_strength(layer).std()
-        return [fluctuation]  # enclose the value (a scalar) in a list  
+        return [fluctuation]  # enclose the value (a scalar) in a list
 
 class __CNNLayer(__Network):
     # Strong assumption: convolutional layers always preceed in block fc layers.
@@ -79,6 +82,9 @@ class __CNNLayer(__Network):
             w = int((self.input_shape_layer[l-1][1]-self.weights[l].shape[1]+2*self.paddings[l])/self.strides[l])+1
             c = self.weights[l].shape[-1]
             self.input_shape_layer.append([h,w,c])
+        
+    def link_weights(self, layer):
+        return (self.weights[layer], self.biases[layer])
             
     def nodes_strength(self, layer):
         """
