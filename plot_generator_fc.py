@@ -21,6 +21,7 @@ from colour import Color
 from random import shuffle
 
 from ComplexNetwork import ComplexNetwork
+from divergence import shannon_divergence
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
@@ -68,6 +69,7 @@ colors = list(red.range_to(Color("red"), num_colors))
 layers_link_weights = {}
 link_weights_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
 link_weights = [cp.copy(link_weights_single_layer) for _ in range(num_layers)]  # one dictionary per layer
+link_weights_densities = []  # Collect densities (to estimate divergence between )
 print("\n[logger]: Generating weights histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
@@ -99,6 +101,8 @@ for l in range(num_layers):
             x = np.arange(min_, max_, abs(max_-min_)/1000)
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
+            # Collect densities
+            link_weights_densities += [x, density(x)]
     plt.title("{} Link Weights LAYER {}".format(dataset, l))
     plt.xlabel("W")
     plt.ylabel("PDF(W)")
@@ -108,8 +112,9 @@ for l in range(num_layers):
     plt.close()
 
 # Nodes strength
-link_nodes_strength_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
-nodes_strength = [cp.copy(link_nodes_strength_single_layer) for _ in range(num_layers)]  # one dictionary per layer
+nodes_strength_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
+nodes_strength = [cp.copy(nodes_strength_single_layer) for _ in range(num_layers)]  # one dictionary per layer
+nodes_strength_densities = []  # Collect densities (to estimate divergence between )
 print("\n[logger]: Generating strengths histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
@@ -141,6 +146,8 @@ for l in range(num_layers):
             x = np.arange(min_, max_, abs(max_-min_)/1000)
             density = stats.kde.gaussian_kde(nodes_strength[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
+            # Collect densities
+            nodes_strength_densities += [x, density(x)]
     plt.title("{} Nodes Strength LAYER {}".format(dataset, l))
     plt.xlabel("S")
     plt.ylabel("PDF(S)")
@@ -191,3 +198,33 @@ for l in range(num_layers):
     plt.savefig(saved_images_path + fig_name)
     plt.show()
     plt.close()
+
+# Plot weights divergences
+heatmap_link_weights = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
+for i in ranges_accuracy:
+    for j in ranges_accuracy:
+        if i > j:
+            break
+        d1, d2 = link_weights_densities[i], link_weights_densities[j]
+        heatmap_link_weights[i,j] = heatmap_link_weights[j,i] = shannon_divergence(d1, d2, distr=True)
+plt.title("{} Shannon Divergence for the Link Weights(layer by layer)".format(dataset))
+plt.imshow(heatmap_link_weights, cmap='hot', interpolation='nearest')
+fig_name = "{}_{}_{}_heatmap_link-weights_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
+plt.savefig(saved_images_path + fig_name)
+plt.show()
+print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_link_weights)
+
+# Plot nodes strength divergences
+heatmap_nodes_strength = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
+for i in ranges_accuracy:
+    for j in ranges_accuracy:
+        if i > j:
+            break
+        d1, d2 = nodes_strength_densities[i], nodes_strength_densities[j]
+        heatmap_nodes_strength[i,j] = heatmap_nodes_strength[j,i] = shannon_divergence(d1, d2, distr=True)
+plt.title("{} Shannon Divergence for the Link Weights(layer by layer)".format(dataset))
+plt.imshow(heatmap_nodes_strength, cmap='hot', interpolation='nearest')
+fig_name = "{}_{}_{}_heatmap_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
+plt.savefig(saved_images_path + fig_name)
+plt.show()
+print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_nodes_strength)
