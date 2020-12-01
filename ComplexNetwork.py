@@ -45,7 +45,7 @@ class __FCLayer(__Network):
         if layer == 0:
             strength = self.weights[0].sum(axis=-1) + 1
         # Last layer
-        elif layer == self.num_layers:
+        elif layer == self.num_layers-1:
             strength = self.weights[-1].sum(axis=0) + 1 + self.biases[-1]
         else:
             s_in = self.weights[layer].sum(axis=-1) 

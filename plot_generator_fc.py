@@ -13,6 +13,8 @@ Use this code to scan the results/fc (or other architectures) folder to extract 
 """
 import copy as cp
 import glob
+import itertools
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from argparse import ArgumentParser
@@ -22,6 +24,9 @@ from random import shuffle
 
 from ComplexNetwork import ComplexNetwork
 from divergence import shannon_divergence
+
+# disable plot
+matplotlib.use('Agg')  
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
@@ -52,6 +57,7 @@ init = args.init_method
 maxfiles = args.maxfiles
 netsize = args.netsize
 
+num_weights = num_layers-1  # a two layers nn has one set of parameters ;)
 ranges_accuracy = np.arange(0., 1.0, bins_size)
 input_size, output_size = (28*28 if dataset=='MNIST' else 32*32*3), 10
 init = ('*' if len(init)==0 else init)
@@ -68,15 +74,16 @@ colors = list(red.range_to(Color("red"), num_colors))
 # Link weights
 layers_link_weights = {}
 link_weights_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r) for r in ranges_accuracy], [np.array([]) for _ in range(num_colors)])}
-link_weights = [cp.copy(link_weights_single_layer) for _ in range(num_layers)]  # one dictionary per layer
+link_weights = [cp.copy(link_weights_single_layer) for _ in range(num_weights)]  # one dictionary per layer
 link_weights_densities = []  # Collect densities (to estimate divergence between )
 print("\n[logger]: Generating weights histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
-    files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
-    n_files = len(glob.glob(files_))
+    extended_acc_prefix = ["{:4.4f}".format(a) for a in np.arange(acc, acc+bins_size, 0.025)]
+    files_ = [files_pattern + 'binaccuracy-{}'.format(ap) + '*.npy' for ap in extended_acc_prefix]
+    n_files = sum([len(glob.glob(f)) for f in files_])
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    processed_files, idx_glob, global_files = 0, 0, list(itertools.chain.from_iterable([glob.glob(f) for f in files_]))
     if len(global_files) > 0:  # random shuffle if non-empty
         shuffle(global_files)
     while processed_files != len(global_files):
@@ -85,13 +92,13 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=True)  # simplify the weights/biases usage
-        for l in range(num_layers):
+        CNet = ComplexNetwork(architecture, num_weights, 0, W, input_size, output_size, strides=None, paddings=None, flatten=True)  # simplify the weights/biases usage
+        for l in range(num_weights):
             link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
         if processed_files >= maxfiles:
             break
         idx_glob += 1
-for l in range(num_layers):
+for l in range(num_weights):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
         acc_prefix = "{:4.4f}".format(acc)
@@ -102,13 +109,13 @@ for l in range(num_layers):
             density = stats.kde.gaussian_kde(link_weights[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
             # Collect densities
-            link_weights_densities += [x, density(x)]
+            link_weights_densities += [(x, density)]  # append data and density *function*
     plt.title("{} Link Weights LAYER {}".format(dataset, l))
     plt.xlabel("W")
     plt.ylabel("PDF(W)")
     fig_name = "{}_{}_{}_link-weights_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
-    plt.show()
+    #plt.show()
     plt.close()
 
 # Nodes strength
@@ -118,10 +125,11 @@ nodes_strength_densities = []  # Collect densities (to estimate divergence betwe
 print("\n[logger]: Generating strengths histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
     acc_prefix = "{:4.4f}".format(acc)
-    files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
-    n_files = len(glob.glob(files_))
+    extended_acc_prefix = ["{:4.4f}".format(a) for a in np.arange(acc, acc+bins_size, 0.025)]
+    files_ = [files_pattern + 'binaccuracy-{}'.format(ap) + '*.npy' for ap in extended_acc_prefix]
+    n_files = sum([len(glob.glob(f)) for f in files_])
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    processed_files, idx_glob, global_files = 0, 0, list(itertools.chain.from_iterable([glob.glob(f) for f in files_]))
     if len(global_files) > 0:  # random shuffle if non-empty
         shuffle(global_files)
     while processed_files != len(global_files):
@@ -147,13 +155,13 @@ for l in range(num_layers):
             density = stats.kde.gaussian_kde(nodes_strength[l][acc_prefix])
             plt.plot(x, density(x), alpha=.5, color=str(colors[i]))
             # Collect densities
-            nodes_strength_densities += [x, density(x)]
+            nodes_strength_densities += [(x, density)]  # append data and density *function*
     plt.title("{} Nodes Strength LAYER {}".format(dataset, l))
     plt.xlabel("S")
     plt.ylabel("PDF(S)")
     fig_name = "{}_{}_{}_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
-    plt.show()
+    #plt.show()
     plt.close()
     
 # Nodes fluctuation
@@ -161,12 +169,12 @@ link_nodes_fluctuation_single_layer = {k:v for (k,v) in zip(['{:4.4f}'.format(r)
 nodes_fluctuation= [cp.copy(link_nodes_fluctuation_single_layer) for _ in range(num_layers)]  # one dictionary per layer
 print("\n[logger]: Generating fluctuations histogram PDFs and error-bars")
 for i, acc in enumerate(ranges_accuracy):
-    print("[logger]: Collecting files...")
     acc_prefix = "{:4.4f}".format(acc)
-    files_ = files_pattern + 'binaccuracy-{}'.format(acc_prefix) + '*.npy'
-    n_files = len(glob.glob(files_))
+    extended_acc_prefix = ["{:4.4f}".format(a) for a in np.arange(acc, acc+bins_size, 0.025)]
+    files_ = [files_pattern + 'binaccuracy-{}'.format(ap) + '*.npy' for ap in extended_acc_prefix]
+    n_files = sum([len(glob.glob(f)) for f in files_])
     print("[logger]: Collecting parameters for {} nets with accuracy {}, with wildcard {}".format(n_files, acc_prefix, files_))
-    processed_files, idx_glob, global_files = 0, 0, glob.glob(files_)
+    processed_files, idx_glob, global_files = 0, 0, list(itertools.chain.from_iterable([glob.glob(f) for f in files_]))
     if len(global_files) > 0:  # random shuffle if non-empty
         shuffle(global_files)
     while processed_files != len(global_files):
@@ -196,35 +204,48 @@ for l in range(num_layers):
     plt.ylabel("PDF(Yi)")
     fig_name = "{}_{}_{}_nodes-fluctuation_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
     plt.savefig(saved_images_path + fig_name)
-    plt.show()
+    #plt.show()
     plt.close()
 
 # Plot weights divergences
 heatmap_link_weights = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
-for i in ranges_accuracy:
-    for j in ranges_accuracy:
-        if i > j:
+for i in range(len(ranges_accuracy)):
+    for j in range(len(ranges_accuracy)):
+        if j > i:
             break
-        d1, d2 = link_weights_densities[i], link_weights_densities[j]
-        heatmap_link_weights[i,j] = heatmap_link_weights[j,i] = shannon_divergence(d1, d2, distr=True)
-plt.title("{} Shannon Divergence for the Link Weights(layer by layer)".format(dataset))
+        d1, d2 = link_weights_densities[i][0], link_weights_densities[j][0]  # collect data
+        P, Q = link_weights_densities[i][1], link_weights_densities[j][1]  # collect distributions
+        heatmap_link_weights[i,j] = heatmap_link_weights[j,i] = shannon_divergence(d1, d2, distr=(P, Q))
+# Prevent inf in the heatmap
+max_divergence = heatmap_link_weights[heatmap_link_weights!=np.inf].max()
+heatmap_link_weights[heatmap_link_weights==np.inf] = max_divergence+1
+plt.title("{} Shannon Divergence for the Link Weights (accuracies on the axis)".format(dataset))
 plt.imshow(heatmap_link_weights, cmap='hot', interpolation='nearest')
 fig_name = "{}_{}_{}_heatmap_link-weights_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
 plt.savefig(saved_images_path + fig_name)
-plt.show()
+#plt.show()
+plt.close()
 print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_link_weights)
+np.save(saved_images_path + "{}_{}_{}_heatmap_link-weights_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, '.npy'), heatmap_link_weights)
 
 # Plot nodes strength divergences
 heatmap_nodes_strength = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
-for i in ranges_accuracy:
-    for j in ranges_accuracy:
-        if i > j:
+for i in range(len(ranges_accuracy)):
+    for j in range(len(ranges_accuracy)):
+        if j > i:
             break
-        d1, d2 = nodes_strength_densities[i], nodes_strength_densities[j]
-        heatmap_nodes_strength[i,j] = heatmap_nodes_strength[j,i] = shannon_divergence(d1, d2, distr=True)
-plt.title("{} Shannon Divergence for the Link Weights(layer by layer)".format(dataset))
+        d1, d2 = nodes_strength_densities[i][0], nodes_strength_densities[j][0]  # collect data
+        P, Q = nodes_strength_densities[i][1], nodes_strength_densities[j][1]  # collect distributions
+        heatmap_nodes_strength[i,j] = heatmap_nodes_strength[j,i] = shannon_divergence(d1, d2, distr=(P, Q))
+# Prevent inf in the heatmap
+max_divergence = heatmap_nodes_strength[heatmap_nodes_strength!=np.inf].max()
+heatmap_nodes_strength[heatmap_nodes_strength==np.inf] = max_divergence+1
+plt.title("{} Shannon Divergence for the Nodes Strength (accuracies on the axis)".format(dataset))
 plt.imshow(heatmap_nodes_strength, cmap='hot', interpolation='nearest')
 fig_name = "{}_{}_{}_heatmap_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, img_format)
 plt.savefig(saved_images_path + fig_name)
-plt.show()
+#plt.show()
+plt.close()
 print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_nodes_strength)
+np.save(saved_images_path + "{}_{}_{}_heatmap_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, '.npy'), heatmap_nodes_strength)
+
