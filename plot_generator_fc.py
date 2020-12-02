@@ -248,4 +248,3 @@ plt.savefig(saved_images_path + fig_name)
 plt.close()
 print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_nodes_strength)
 np.save(saved_images_path + "{}_{}_{}_heatmap_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, '.npy'), heatmap_nodes_strength)
-
