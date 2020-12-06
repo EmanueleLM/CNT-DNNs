@@ -47,7 +47,7 @@ parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, typ
                     help="Maximum number of files considered for each bin.")
 parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
                     help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters): values are 'small', 'medium' and 'large'")
-parser.add_argument("-r", "--rejectoutliers", dest="num_std_dev", default=None, type=int,
+parser.add_argument("-r", "--rejectoutliers", dest="num_std_dev", default=0, type=int,
                     help="Reject all the outliers that are not in the num_std_dev*data.std(). Default is 0 and ignore this filtering.") 
 
 args = parser.parse_args()
@@ -55,7 +55,7 @@ architecture = str(args.architecture)
 dataset = str(args.dataset)
 num_layers = int(args.num_layers)
 bins_size = args.bins_size
-scaling_factor = int(args.scale)
+scaling_factor = float(args.scale)
 init = str(args.init_method)
 maxfiles = args.maxfiles
 netsize = str(args.netsize)
@@ -68,6 +68,9 @@ init = ('*' if len(init)==0 else init)
 files_pattern = "./weights/{}/{}_{}_{}_*init-{}_support-{}*".format(dataset, dataset, netsize, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
 saved_images_path = "./results/images/{}/".format(dataset)
 img_format = '.png'
+
+print(files_pattern)
+ii
 
 # Set colors for plotting (green to red, low to high accuracy)
 num_nets = len(glob.glob(files_pattern))
