@@ -22,6 +22,7 @@ from scipy import stats
 from colour import Color
 from random import shuffle
 
+from data_utils import reject_outliers
 from ComplexNetwork import ComplexNetwork
 from divergence import shannon_divergence
 
@@ -46,16 +47,19 @@ parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, typ
                     help="Maximum number of files considered for each bin.")
 parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
                     help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters): values are 'small', 'medium' and 'large'")
+parser.add_argument("-r", "--rejectoutliers", dest="num_std_dev", default=None, type=int,
+                    help="Reject all the outliers that are not in the num_std_dev*data.std(). Default is 0 and ignore this filtering.") 
 
 args = parser.parse_args()
-architecture = args.architecture
-dataset = args.dataset
-num_layers = args.num_layers
+architecture = str(args.architecture)
+dataset = str(args.dataset)
+num_layers = int(args.num_layers)
 bins_size = args.bins_size
-scaling_factor = args.scale
-init = args.init_method
+scaling_factor = int(args.scale)
+init = str(args.init_method)
 maxfiles = args.maxfiles
-netsize = args.netsize
+netsize = str(args.netsize)
+num_std_dev = int(args.num_std_dev)
 
 num_weights = num_layers-1  # a two layers nn has one set of parameters ;)
 ranges_accuracy = np.arange(0., 1.0, bins_size)
@@ -98,6 +102,14 @@ for i, acc in enumerate(ranges_accuracy):
         if processed_files >= maxfiles:
             break
         idx_glob += 1
+# Filter data
+if num_std_dev == 0:
+    print("[logger]: Link Weights are filtered of {} std.".format(num_std_dev))
+    for l in range(num_weights):
+        for i, acc in enumerate(ranges_accuracy):
+            if len(link_weights[l][acc_prefix]) != 0:
+                acc_prefix = "{:4.4f}".format(acc)
+                link_weights[l][acc_prefix] = reject_outliers(link_weights[l][acc_prefix], num_std_dev)
 for l in range(num_weights):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -144,6 +156,14 @@ for i, acc in enumerate(ranges_accuracy):
         if processed_files >= maxfiles:
             break
         idx_glob += 1
+# Filter data
+if num_std_dev == 0:
+    print("[logger]: Strenghts are filtered of {} std.".format(num_std_dev))
+    for l in range(num_layers):
+        for i, acc in enumerate(ranges_accuracy):
+            if len(nodes_strength[l][acc_prefix]) != 0:
+                acc_prefix = "{:4.4f}".format(acc)
+                nodes_strength[l][acc_prefix] = reject_outliers(nodes_strength[l][acc_prefix], num_std_dev)
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
@@ -189,6 +209,14 @@ for i, acc in enumerate(ranges_accuracy):
         if processed_files >= maxfiles:
             break
         idx_glob += 1
+# Filter data
+if num_std_dev == 0:
+    print("[logger]: Fluctuations are filtered of {} std.".format(num_std_dev))
+    for l in range(num_layers):
+        for i, acc in enumerate(ranges_accuracy):
+            if len(nodes_fluctuation[l][acc_prefix]) != 0:
+                acc_prefix = "{:4.4f}".format(acc)
+                nodes_fluctuation[l][acc_prefix] = reject_outliers(nodes_fluctuation[l][acc_prefix], num_std_dev)
 for l in range(num_layers):
     print("[logger]: Generating plot for layer {}".format(l))
     for i, acc in enumerate(ranges_accuracy):
