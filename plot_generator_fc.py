@@ -237,9 +237,10 @@ for l in range(num_layers):
 
 # Plot weights divergences
 for l in range(num_weights):
-    heatmap_link_weights = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
-    for i in range(len(ranges_accuracy)):
-        for j in range(len(ranges_accuracy)):
+    num_ranges_accuracy = len(link_weights_densities[0])
+    heatmap_link_weights = np.zeros(shape=(num_ranges_accuracy, num_ranges_accuracy))
+    for i in range(num_ranges_accuracy):
+        for j in range(num_ranges_accuracy):
             if j > i:
                 break
             d1, d2 = link_weights_densities[l][i][0], link_weights_densities[l][j][0]  # collect data
@@ -259,9 +260,10 @@ for l in range(num_weights):
 
 # Plot nodes strength divergences
 for l in range(num_layers):
-    heatmap_nodes_strength = np.zeros(shape=(len(ranges_accuracy), len(ranges_accuracy)))
-    for i in range(len(ranges_accuracy)):
-        for j in range(len(ranges_accuracy)):
+    num_ranges_accuracy = len(nodes_strength_densities[0])
+    heatmap_nodes_strength = np.zeros(shape=(num_ranges_accuracy, num_ranges_accuracy))
+    for i in range(num_ranges_accuracy):
+        for j in range(num_ranges_accuracy):
             if j > i:
                 break
             d1, d2 = nodes_strength_densities[l][i][0], nodes_strength_densities[l][j][0]  # collect data
