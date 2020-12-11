@@ -40,7 +40,7 @@ parser.add_argument("-l", "--layers", dest="num_layers", default=5, type=int,
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
                     help="Accuracy range per-bin.") 
 parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
-                    help="Initialization method(s) considered (if left empty, all are considered).")
+                    help="Initialization method(s) considered (if left empty, all are considered). Remember that a partial filtering requires the * ate the end (i.e., normal-gaussian and normal-uniform requires --init normal*)")
 parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, type=int,
@@ -60,6 +60,10 @@ init = str(args.init_method)
 maxfiles = int(args.maxfiles)
 netsize = str(args.netsize)
 num_std_dev = float(args.num_std_dev)
+
+# Set warnings here
+if len(init)>0 and '*' not in init:
+    print("[logger-WARNING]: Your init technique might require a * at the end, otherwise the filtering will be strict on the patter --init={}".format(init))
 
 num_weights = num_layers-1  # a two layers nn has one set of parameters ;)
 ranges_accuracy = np.arange(0., 1.0, bins_size)
