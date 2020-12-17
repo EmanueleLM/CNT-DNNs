@@ -11,11 +11,13 @@ import os
 import keras
 import random
 from argparse import ArgumentParser
-from keras.datasets import mnist, cifar10
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
-from keras.layers import Conv2D
-from keras import backend as K
+from tensorflow.keras.datasets import mnist, cifar10
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras import backend as K
+from tensorflow.keras.optimizers import SGD, Adam
+from tensorflow.keras.losses import categorical_crossentropy
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
@@ -139,8 +141,8 @@ for seed_value in range(seed_range, seed_range+sims):
 
     # set initializer
     optimizers = {}
-    optimizers['SGD'] = keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
-    optimizers['adam'] = keras.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    optimizers['SGD'] = SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
+    optimizers['adam'] = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
@@ -167,7 +169,7 @@ for seed_value in range(seed_range, seed_range+sims):
         model.add(Dense(200, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
         model.add(Dense(num_classes, activation='softmax', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
                
-        model.compile(loss=keras.losses.categorical_crossentropy,
+        model.compile(loss=categorical_crossentropy,
                       optimizer=opt,
                       metrics=['accuracy'])
         

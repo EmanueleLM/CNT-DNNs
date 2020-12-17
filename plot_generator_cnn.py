@@ -31,19 +31,19 @@ matplotlib.use('Agg')
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
                     help="Architecture (fc or cnn so far).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-l", "--layers", dest="num_layers", default=5, type=int,
                     help="Number of layers of the models considered.")
-parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
+parser.add_argument("-b", "--bins", dest="bins_size", default=0.1, type=float,
                     help="Accuracy range per-bin.") 
 parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
                     help="Initialization method(s) considered (if left empty, all are considered). Remember that a partial filtering requires the * ate the end (i.e., normal-gaussian and normal-uniform requires --init normal*)")
-parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
+parser.add_argument("-scale", "--scale", dest="scale", default=0.5, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
-parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=500, type=int,
+parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=10, type=int,
                     help="Maximum number of files considered for each bin.")
 parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
                     help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters): values are 'small', 'medium' and 'large'")
@@ -67,7 +67,9 @@ if len(init)>0 and '*' not in init:
 
 num_weights = num_layers-1  # a two layers nn has one set of parameters ;)
 ranges_accuracy = np.arange(0., 1.0, bins_size)
-input_size, output_size = (28*28 if dataset=='MNIST' else 32*32*3), 10
+input_shape, output_size = ((1,28,28) if dataset=='MNIST' else (32,32,3)), 10
+num_conv_layers = 2
+paddings, strides = (0,0), (1,1)
 init = ('*' if len(init)==0 else init)
 files_pattern = "./weights/{}/{}_{}_{}_*init-{}_support-{}*".format(dataset, dataset, netsize, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
 saved_images_path = "./results/images/{}/".format(dataset)
@@ -100,9 +102,9 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_weights, 0, W, input_size, output_size, strides=None, paddings=None, flatten=True)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, num_conv_layers, W, input_shape, output_size, strides=strides, paddings=paddings, flatten=False)
         for l in range(num_weights):
-            link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l], CNet.biases[l]))
+            link_weights[l][acc_prefix] = np.concatenate((link_weights[l][acc_prefix], CNet.weights[l].flatten(), CNet.biases[l]))
         if processed_files >= maxfiles:
             break
         idx_glob += 1
@@ -154,7 +156,7 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=False)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, num_conv_layers, W, input_shape, output_size, strides=strides, paddings=paddings, flatten=False)
         for l in range(num_layers):
             nodes_strength[l][acc_prefix] = np.concatenate((nodes_strength[l][acc_prefix], CNet.nodes_strength(l)))
         if processed_files >= maxfiles:
@@ -207,7 +209,7 @@ for i, acc in enumerate(ranges_accuracy):
         W = np.load(file_, allow_pickle=True)  # load parameters
         if  np.any([np.isnan(w).any() for w in W]):
             continue
-        CNet = ComplexNetwork(architecture, num_layers, 0, W, input_size, output_size, strides=None, paddings=None, flatten=False)  # simplify the weights/biases usage
+        CNet = ComplexNetwork(architecture, num_layers, num_conv_layers, W, input_shape, output_size, strides=strides, paddings=paddings, flatten=False)
         for l in range(num_layers):
             nodes_fluctuation[l][acc_prefix] = np.concatenate((nodes_fluctuation[l][acc_prefix], CNet.nodes_fluctuation(l)))
         if processed_files >= maxfiles:
@@ -239,6 +241,7 @@ for l in range(num_layers):
     #plt.show()
     plt.close()
 
+"""
 # Plot weights divergences
 for l in range(num_weights):
     num_ranges_accuracy = len(link_weights_densities[0])
@@ -284,3 +287,4 @@ for l in range(num_layers):
     plt.close()
     print("Shannon divergence (layer by layer) (Matrix)\n ", heatmap_nodes_strength)
     np.save(saved_images_path + "{}_{}_{}_heatmap_nodes-strength_init-{}_support-{}_layer-{}{}".format(dataset, netsize, architecture, (init if init!='*' else 'any'), scaling_factor, l, '.npy'), heatmap_nodes_strength)
+"""
