@@ -21,23 +21,23 @@ from tensorflow.keras.losses import categorical_crossentropy
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
                     help="Architecture (fc or cnn so far).")
-parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
+parser.add_argument("-c", "--cut-train", dest="cut_train", default=0.15, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
-parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
+parser.add_argument("-s", "--seed", dest="seed_range", default=300000, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
-parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
+parser.add_argument("-b", "--bins", dest="bins_size", default=0.1, type=float,
                     help="Accuracy range per-bin.") 
-parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
+parser.add_argument("-scale", "--scale", dest="scale", default=0.5, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
-parser.add_argument("-sims", "--sims", dest="sims", default=5000, type=int,
+parser.add_argument("-sims", "--sims", dest="sims", default=1000, type=int,
                     help="number of simulations executed.")
-parser.add_argument("-min", "--min", dest="min", default=0.0, type=float,
+parser.add_argument("-min", "--min", dest="min", default=0.2, type=float,
                     help="Min accuracy values for final models (discard anything below).")
-parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
+parser.add_argument("-max", "--max", dest="max", default=0.9, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
@@ -79,7 +79,7 @@ else:
     raise Exception("{} is not a valid architecture argument (use 'fc' or 'cnn')".format(architecture))
 
 # import data
-batch_size = 64
+batch_size = 256
 num_classes = 10
 # input image dimensions
 img_rows, img_cols = ((28, 28) if dataset=='MNIST' else (32, 32))
@@ -129,15 +129,15 @@ for seed_value in range(seed_range, seed_range+sims):
     
     # parameters initializers
     initializers = {}
-    initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
+    #initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
     initializers['random-uniform'] = keras.initializers.RandomUniform(minval=-scaling_factor, maxval=scaling_factor, seed=seed_value)
-    initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
-    initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
-    initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
-    initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
-    initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
-    initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
-    initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
+    #initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
+    #initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
+    #initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
+    #initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
+    #initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
+    #initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
+    #initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
 
     # set initializer
     optimizers = {}
@@ -146,7 +146,7 @@ for seed_value in range(seed_range, seed_range+sims):
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
-    epochs = random.randint(1, 5)
+    epochs = random.randint(1, 3)
     n_layers = 2
     
     for key in initializers.keys():
@@ -193,8 +193,8 @@ for seed_value in range(seed_range, seed_range+sims):
             if r <= accuracy <= r + bins_size:
                 acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
                 wildcard = "{}_{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, acc_prefix)
-                print(wildcard, glob.glob(dst+wildcard))
-                if len(glob.glob(dst+wildcard)) <= 250:
+                #print(wildcard, glob.glob(dst+wildcard))
+                if len(glob.glob(dst+wildcard)) <= 50:
                     net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
                     np.save(dst + net_name, np.asarray(model.get_weights()))
                 break
