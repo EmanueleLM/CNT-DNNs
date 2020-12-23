@@ -129,15 +129,15 @@ for seed_value in range(seed_range, seed_range+sims):
     
     # parameters initializers
     initializers = {}
-    #initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
+    initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
     initializers['random-uniform'] = keras.initializers.RandomUniform(minval=-scaling_factor, maxval=scaling_factor, seed=seed_value)
-    #initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
-    #initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
+    initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
+    initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
+    initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
+    initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
+    initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
 
     # set initializer
     optimizers = {}
