@@ -33,19 +33,19 @@ matplotlib.use('Agg')
 parser = ArgumentParser()
 parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
                     help="Architecture (fc or cnn so far).")
-parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
+parser.add_argument("-d", "--dataset", dest="dataset", default='CIFAR10', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
-parser.add_argument("-l", "--layers", dest="num_layers", default=4, type=int,
+parser.add_argument("-l", "--layers", dest="num_layers", default=6, type=int,
                     help="Number of layers of the models considered.")
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.1, type=float,
                     help="Accuracy range per-bin.") 
-parser.add_argument("-i", "--init", dest="init_method", default='', type=str,
+parser.add_argument("-i", "--init", dest="init_method", default='random-normal*', type=str,
                     help="Initialization method(s) considered (if left empty, all are considered). Remember that a partial filtering requires the * ate the end (i.e., normal-gaussian and normal-uniform requires --init normal*)")
-parser.add_argument("-scale", "--scale", dest="scale", default=0.5, type=float,
+parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 parser.add_argument("-maxfiles", "--maxfiles", dest="maxfiles", default=10, type=int,
                     help="Maximum number of files considered for each bin.")
-parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', type=str,
+parser.add_argument("-netsize", "--netsize", dest="netsize", default='medium', type=str,
                     help="Number of parameters in the hidden layers (depends on the architecture to have models with different magnitude of parameters): values are 'small', 'medium' and 'large'")
 parser.add_argument("-r", "--rejectoutliers", dest="num_std_dev", default=0, type=float,
                     help="Reject all the outliers that are not in the num_std_dev*data.std(). Default is 0 and ignore this filtering.") 
@@ -65,10 +65,10 @@ num_std_dev = float(args.num_std_dev)
 if len(init)>0 and '*' not in init:
     print("[logger-WARNING]: Your init technique might require a * at the end, otherwise the filtering will be strict on the patter --init={}".format(init))
 
-ranges_accuracy = np.arange(0., 1.0, bins_size)
+ranges_accuracy = np.arange(0., 0.71, bins_size)
 input_shape, output_size = ((28,28,1) if dataset=='MNIST' else (32,32,3)), 10
-num_conv_layers = 2
-paddings, strides = (0,0), (1,1)
+num_conv_layers = 4
+paddings, strides = tuple([0 for _ in range(num_conv_layers)]), tuple([1 for _ in range(num_conv_layers)])
 init = ('*' if len(init)==0 else init)
 files_pattern = "./weights/{}/{}_{}_{}_*init-{}_support-{}*".format(dataset, dataset, netsize, architecture, init, scaling_factor)  # wildcards for architecture and accuracy
 saved_images_path = "./results/images/{}/".format(dataset)

@@ -14,12 +14,12 @@ architecture = 'cnn'
 input_shape = ((28,28,1) if dataset=="MNIST" else (32,32,3))
 output_size = 10
 
-file_ = "./weights/{}/{}_small_cnn_nlayers-4_init-random-uniform_support-0.05_seed-0_realaccuracy-0.5296_binaccuracy-0.5250.npy".format(dataset, dataset)
-num_layers = 4
-num_conv_layers = 2
-paddings, strides = (0,0), (1,1)
+file_ = "./weights/{}/{}_medium_cnn_nlayers-6_init-random-normal_support-0.05_seed-42_realaccuracy-0.7005_binaccuracy-0.7000.npy".format(dataset, dataset)
+num_layers = 6
+num_conv_layers = 3
+paddings, strides = tuple([0 for _ in range(num_conv_layers)]), tuple([1 for _ in range(num_conv_layers)])
 
-saved_accuracy = '0.52'
+saved_accuracy = '0.70'
 saved_model_size = 'small'
 saved_imag_path = "./results/images/{}/".format(dataset)
 img_format = '.png'

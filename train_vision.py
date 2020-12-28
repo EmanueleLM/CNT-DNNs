@@ -21,23 +21,23 @@ from tensorflow.keras.losses import categorical_crossentropy
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='cnn', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
                     help="Architecture (fc or cnn so far).")
-parser.add_argument("-c", "--cut-train", dest="cut_train", default=0.15, type=float,
+parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
-parser.add_argument("-s", "--seed", dest="seed_range", default=300000, type=int,
+parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
                     help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
-parser.add_argument("-b", "--bins", dest="bins_size", default=0.1, type=float,
+parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
                     help="Accuracy range per-bin.") 
-parser.add_argument("-scale", "--scale", dest="scale", default=0.5, type=float,
+parser.add_argument("-scale", "--scale", dest="scale", default=0.05, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
-parser.add_argument("-sims", "--sims", dest="sims", default=1000, type=int,
+parser.add_argument("-sims", "--sims", dest="sims", default=5000, type=int,
                     help="number of simulations executed.")
-parser.add_argument("-min", "--min", dest="min", default=0.2, type=float,
+parser.add_argument("-min", "--min", dest="min", default=0.0, type=float,
                     help="Min accuracy values for final models (discard anything below).")
-parser.add_argument("-max", "--max", dest="max", default=0.9, type=float,
+parser.add_argument("-max", "--max", dest="max", default=1.0, type=float,
                     help="Max accuracy values for final models (discard anything above).")
 parser.add_argument("-gpus", "--gpus", dest="gpus", default='0,1,2', type=str,
                     help="Bind GPUs (server only)")
@@ -79,7 +79,7 @@ else:
     raise Exception("{} is not a valid architecture argument (use 'fc' or 'cnn')".format(architecture))
 
 # import data
-batch_size = 256
+batch_size = 64
 num_classes = 10
 # input image dimensions
 img_rows, img_cols = ((28, 28) if dataset=='MNIST' else (32, 32))
@@ -146,7 +146,7 @@ for seed_value in range(seed_range, seed_range+sims):
     opt = optimizers[np.random.choice(list(optimizers.keys()))]  
     
     # set training iterations
-    epochs = random.randint(1, 3)
+    epochs = random.randint(1, 5)
     n_layers = 2
     
     for key in initializers.keys():
@@ -177,24 +177,25 @@ for seed_value in range(seed_range, seed_range+sims):
         dst = './weights/{}/'.format(dataset)
         dataset_size = int(cut_train*len(x_train))
 
-        # train        
-        print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
-        model.fit(x_train[:dataset_size], y_train[:dataset_size],
-                  batch_size=batch_size,
-                  epochs=epochs,
-                  verbose=1,
-                  validation_data=(x_test, y_test))
+        for e in epochs:
+            # train        
+            print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
+            model.fit(x_train[:dataset_size], y_train[:dataset_size],
+                    batch_size=batch_size,
+                    epochs=1,
+                    verbose=1,
+                    validation_data=(x_test, y_test))
         
-        # test and save
-        print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}".format(dst))                  
-        accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
-        ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)        
-        for r in ranges_accuracy:
-            if r <= accuracy <= r + bins_size:
-                acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
-                wildcard = "{}_{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, acc_prefix)
-                #print(wildcard, glob.glob(dst+wildcard))
-                if len(glob.glob(dst+wildcard)) <= 50:
-                    net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
-                    np.save(dst + net_name, np.asarray(model.get_weights()))
-                break
+            # test and save
+            print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}".format(dst))                  
+            accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
+            ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)        
+            for r in ranges_accuracy:
+                if r <= accuracy <= r + bins_size:
+                    acc_prefix, acc_real = "{:4.4f}".format(r), "{:4.4f}".format(accuracy)
+                    wildcard = "{}_{}_{}_nlayers-{}_init-{}_support-{}_*binaccuracy-{}.npy".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, acc_prefix)
+                    print(wildcard, glob.glob(dst+wildcard))
+                    if len(glob.glob(dst+wildcard)) <= 250:
+                        net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realaccuracy-{}_binaccuracy-{}".format(dataset, netsize, architecture, n_layers+2, key, scaling_factor, seed_value, acc_real, acc_prefix)
+                        np.save(dst + net_name, np.asarray(model.get_weights()))
+                    break
