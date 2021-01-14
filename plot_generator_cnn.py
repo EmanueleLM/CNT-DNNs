@@ -65,7 +65,7 @@ num_std_dev = float(args.num_std_dev)
 if len(init)>0 and '*' not in init:
     print("[logger-WARNING]: Your init technique might require a * at the end, otherwise the filtering will be strict on the patter --init={}".format(init))
 
-ranges_accuracy = np.arange(0., 0.71, bins_size)
+ranges_accuracy = np.arange(0.1, 0.8, bins_size)
 input_shape, output_size = ((28,28,1) if dataset=='MNIST' else (32,32,3)), 10
 num_conv_layers = 4
 paddings, strides = tuple([0 for _ in range(num_conv_layers)]), tuple([1 for _ in range(num_conv_layers)])
