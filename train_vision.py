@@ -177,7 +177,7 @@ for seed_value in range(seed_range, seed_range+sims):
         dst = './weights/{}/'.format(dataset)
         dataset_size = int(cut_train*len(x_train))
 
-        for e in epochs:
+        for e in range(epochs):
             # train        
             print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
             model.fit(x_train[:dataset_size], y_train[:dataset_size],
