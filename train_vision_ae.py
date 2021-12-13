@@ -17,20 +17,26 @@ from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import SGD, Adam
-from tensorflow.keras.losses import categorical_crossentropy
+from tensorflow.keras.losses import categorical_crossentropy, mse, binary_crossentropy
 
 # custom seed's range (multiple experiments)
 parser = ArgumentParser()
-parser.add_argument("-a", "--architecture", dest="architecture", default='fc', type=str,
+parser.add_argument("-a", "--architecture", dest="architecture", default='ae', type=str,
                     help="Architecture (fc or cnn so far).")
+parser.add_argument("-e", "--epochs", dest="epochs", default=5, type=int,
+                    help="Training epochs.")
+parser.add_argument("-l", "--layers", dest="n_layers", default=3, type=int,
+                    help="Hidden layers.")
+parser.add_argument("-sf", "--hu-scaling-factor", dest="hu_scaling_factor", default=3, type=int,
+                    help="Scaling factor of the number of hidden units.")
 parser.add_argument("-c", "--cut-train", dest="cut_train", default=1.0, type=float,
                     help="Max ratio of the dataset randomly used at each stage (must be different from 0.).")
 parser.add_argument("-d", "--dataset", dest="dataset", default='MNIST', type=str,
                     help="Dataset prefix used to save weights (MNIST, CIFAR10).")
 parser.add_argument("-s", "--seed", dest="seed_range", default=0, type=int,
-                    help="Seed range (from n to n+<NUM_EXPERIMENTS>).") 
+                    help="Seed range (from n to n+<NUM_EXPERIMENTS>).")
 parser.add_argument("-b", "--bins", dest="bins_size", default=0.025, type=float,
-                    help="Accuracy range per-bin.") 
+                    help="Accuracy range per-bin.")
 parser.add_argument("-scale", "--scale", dest="scale", default=0.5, type=float,
                     help="Scaling factor used to initialize weights (e.g., support of uniform distribution, std of gaussian etc.).")
 parser.add_argument("-sims", "--sims", dest="sims", default=30, type=int,
@@ -46,6 +52,9 @@ parser.add_argument("-netsize", "--netsize", dest="netsize", default='small', ty
 
 args = parser.parse_args()
 architecture = args.architecture
+epochs = args.epochs
+n_layers = args.n_layers
+hu_scaling_factor = args.hu_scaling_factor
 cut_train = args.cut_train
 dataset = args.dataset
 seed_range = args.seed_range
@@ -59,31 +68,34 @@ netsize = args.netsize
 # Set the size of the networks to be trained
 if architecture == 'fc':
     if netsize == 'medium':
-        hidden_units =  256
+        hidden_units = 256
     elif netsize == 'big':
         hidden_units = 2000
     elif netsize == 'small':
-        hidden_units = 8 #32
+        hidden_units = 8  # 32
     else:
         raise Exception("{} is not a valid netsize argument (use 'small', 'medium' or 'big')".format(netsize))
 elif architecture == 'cnn':
     if netsize == 'medium':
-        hidden_units =  64
+        hidden_units = 64
     elif netsize == 'small':
         hidden_units = 10
     elif netsize == 'big':
         hidden_units = 256
     else:
         raise Exception("{} is not a valid netsize argument (use 'small', 'medium' or 'big')".format(netsize))
+elif architecture == "ae":
+    hidden_units = None
 else:
     raise Exception("{} is not a valid architecture argument (use 'fc' or 'cnn')".format(architecture))
 
 # import data
-batch_size = 16
+batch_size = 256
 num_classes = 10
 # input image dimensions
-img_rows, img_cols = ((28, 28) if dataset=='MNIST' else (32, 32))
-num_channels = (1 if dataset=='MNIST' else 3)
+img_rows, img_cols = ((28, 28) if dataset == 'MNIST' else (32, 32))
+input_length = (28*28 if dataset == 'MNIST' else 32*32*3)
+num_channels = (1 if dataset == 'MNIST' else 3)
 # the data, split between train and test sets
 if dataset == 'MNIST':
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -111,98 +123,151 @@ y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
 # Set unique seed value
-for seed_value in range(seed_range, seed_range+sims):
+for seed_value in range(seed_range, seed_range + sims):
     # 1. Set `PYTHONHASHSEED` environment variable at a fixed value
-    os.environ['PYTHONHASHSEED']=str(seed_value)
+    os.environ['PYTHONHASHSEED'] = str(seed_value)
     # 2. Set `python` built-in pseudo-random generator at a fixed value
     random.seed(seed_value)
     # 3. Set `numpy` pseudo-random generator at a fixed value
     import numpy as np
+
     np.random.seed(seed_value)
     # 4. Set `tensorflow` pseudo-random generator at a fixed value
     import tensorflow as tf
+
     tf.random.set_random_seed(seed_value)
     # 5. Configure a new global `tensorflow` session
     session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
     sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
     tf.compat.v1.keras.backend.set_session(sess)
-    
+
     # parameters initializers
     initializers = {}
     initializers['random-normal'] = keras.initializers.RandomNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
-    #initializers['random-uniform'] = keras.initializers.RandomUniform(minval=-scaling_factor, maxval=scaling_factor, seed=seed_value)
-    #initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
-    #initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
-    #initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
+    # initializers['random-uniform'] = keras.initializers.RandomUniform(minval=-scaling_factor, maxval=scaling_factor, seed=seed_value)
+    # initializers['truncated-normal'] = keras.initializers.TruncatedNormal(mean=0.0, stddev=scaling_factor, seed=seed_value)
+    # initializers['variance-scaling-normal-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='normal', seed=seed_value)
+    # initializers['variance-scaling-normal-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='normal', seed=seed_value)
+    # initializers['variance-scaling-normal-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='normal', seed=seed_value)
+    # initializers['variance-scaling-uniform-fanin'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_in', distribution='uniform', seed=seed_value)
+    # initializers['variance-scaling-uniform-fanout'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_out', distribution='uniform', seed=seed_value)
+    # initializers['variance-scaling-uniform-fanavg'] = keras.initializers.VarianceScaling(scale=scaling_factor, mode='fan_avg', distribution='uniform', seed=seed_value)
 
     # set initializer
     optimizers = {}
-    optimizers['SGD'] = SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
-    #optimizers['adam'] = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
-    opt = optimizers[np.random.choice(list(optimizers.keys()))]  
-    
+    #optimizers['SGD'] = SGD(learning_rate=0.01, momentum=0.0, nesterov=False)
+    optimizers['adam'] = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, amsgrad=False)
+    opt = optimizers[np.random.choice(list(optimizers.keys()))]
+
     # set training iterations
-    epochs = 10
-    n_layers = 1
-    
     for key in initializers.keys():
         model = Sequential()
         if architecture == 'cnn':
             for _ in range(n_layers):
-                model.add(Conv2D(hidden_units, kernel_size=(3, 3), activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(
+                    Conv2D(hidden_units, kernel_size=(3, 3), activation='relu', kernel_initializer=initializers[key],
+                           bias_initializer=initializers[key]))
             model.add(Flatten())
         elif architecture == 'fc':
             model.add(Flatten())
             for _ in range(n_layers):
-                model.add(Dense(hidden_units, activation='relu',kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+                model.add(Dense(hidden_units, activation='relu', kernel_initializer=initializers[key],
+                                bias_initializer=initializers[key]))
         elif architecture == 'rnn':
             raise NotImplementedError("{} has not been implemented yet.".format(architecture))
         elif architecture == 'attention':
             raise NotImplementedError("{} has not been implemented yet.".format(architecture))
+        elif architecture == 'ae':
+            encoder_hu = [input_length]
+            model.add(Flatten())
+            for nl in range(n_layers):
+                model.add(Dense(max(2,int(input_length/hu_scaling_factor**(nl+1))), activation='sigmoid', kernel_initializer=initializers[key],
+                                bias_initializer=initializers[key]))
+                encoder_hu += [int(input_length/hu_scaling_factor**(nl+1))]
+            for ehu in encoder_hu[1:-1][::-1]:
+                model.add(Dense(ehu, activation='sigmoid', kernel_initializer=initializers[key],
+                                bias_initializer=initializers[key]))
+            #model.add(Dense((784 if dataset == "MNIST" else 32*32*3), activation='sigmoid', kernel_initializer=initializers[key],
+            #                bias_initializer=initializers[key]))
         else:
             raise NotImplementedError("{} has not been implemented.".format(architecture))
         # Add the final layers: same for every architecture so we can analyse them together ;)
-        #model.add(Dense(200, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
-        model.add(Dense(num_classes, activation='softmax', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
-               
-        model.compile(loss=categorical_crossentropy,
-                      optimizer=opt,
-                      metrics=['accuracy'])
-        
+        # model.add(Dense(200, activation='relu', kernel_initializer=initializers[key], bias_initializer=initializers[key]))
+        if architecture == "ae":
+            model.add(Dense(input_length, activation='sigmoid', kernel_initializer=initializers[key],
+                            bias_initializer=initializers[key]))
+            model.compile(loss=binary_crossentropy,
+                          optimizer=opt)
+        else:
+            model.add(Dense(num_classes, activation='softmax', kernel_initializer=initializers[key],
+                            bias_initializer=initializers[key]))
+            model.compile(loss=categorical_crossentropy,
+                          optimizer=opt,
+                          metrics=['accuracy'])
+
         # Save the weights at the first and last iteration
         dst = './weights/{}/'.format(dataset)
-        dataset_size = int(cut_train*len(x_train))
+        dataset_size = int(cut_train * len(x_train))
 
         for e in range(epochs):
-            # train        
+            # train
             print("[logger]: Training on {}/{} datapoints.".format(dataset_size, len(x_train)))
-            model.fit(x_train[:dataset_size], y_train[:dataset_size],
-                    batch_size=batch_size,
-                    epochs=1,
-                    verbose=1,
-                    validation_data=(x_test, y_test))
-        
+            if architecture != "ae":
+                model.fit(x_train[:dataset_size], y_train[:dataset_size],
+                          batch_size=batch_size,
+                          epochs=1,
+                          verbose=1,
+                          validation_data=(x_test, y_test))
+            else:
+                model.fit(x_train[:dataset_size], x_train[:dataset_size].reshape(dataset_size, input_length),
+                          batch_size=batch_size,
+                          epochs=1,
+                          verbose=1,
+                          validation_data=(x_test, x_test.reshape(-1,input_length)))
+
             # test and save
-            print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}".format(dst))                  
-            accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
-            ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)
+            print("[CUSTOM-LOGGER]: Saving final params to file at relative path {}".format(dst))
+            if architecture != "ae":
+                accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
+                ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)
+            else:
+                accuracy = model.evaluate(x_test, x_test.reshape(-1,input_length), verbose=0)
+                #ranges_accuracy = np.arange(min_range_fin, max_range_fin, bins_size)
 
         # Save network
         acc_real = "{:4.4f}".format(accuracy)
-        net_name = "{}_{}_{}_nlayers-{}_nhunits-{}_init-{}_support-{}_seed-{}_realaccuracy-{}".format(dataset,
+        if architecture != "ae":
+            net_name = "{}_{}_{}_nlayers-{}_nhunits-{}_init-{}_support-{}_seed-{}_realaccuracy-{}".format(dataset,
+                                                                                                          netsize,
+                                                                                                          architecture,
+                                                                                                          n_layers + 2,
+                                                                                                          hidden_units,
+                                                                                                          key,
+                                                                                                          scaling_factor,
+                                                                                                          seed_value,
+                                                                                                          acc_real
+                                                                                                          )
+        else:
+            net_name = "{}_{}_{}_nlayers-{}_init-{}_support-{}_seed-{}_realloss-{}".format(dataset,
                                                                                           netsize,
                                                                                           architecture,
                                                                                           n_layers + 2,
-                                                                                          hidden_units,
                                                                                           key,
                                                                                           scaling_factor,
                                                                                           seed_value,
                                                                                           acc_real
                                                                                           )
+        """
+        x = x_test[0]
+        x = x.reshape(28,28)
+        x_pred = model.predict(x.reshape(1,28,28))
+        import matplotlib.pyplot as plt
+        plt.imshow(x)
+        plt.show()
+        plt.imshow(x_pred.reshape(28,28))
+        plt.show()
+        """
+
         np.save(dst + net_name, np.asarray(model.get_weights()))
         """
             for r in ranges_accuracy:
